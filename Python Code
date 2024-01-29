@@ -1,0 +1,160 @@
+python
+import pygame
+
+
+# Request user input for the number of queens (n)
+def request_user_input():
+    queens_count = int(input("Provide the desired number of queens (must be a natural number and not equal to 2 or 3): "))
+    if queens_count == 2 or queens_count == 3:
+        print("Incorrect input. Cannot be 2 or 3.")
+        exit()
+    return queens_count
+
+
+# Generate the chessboard
+def generate_chessboard(queens_count):
+    chessboard = []
+
+    for i in range(queens_count):
+        row = [0] * queens_count
+        chessboard.append(row)
+
+    return chessboard
+
+
+# If a queen exists at a board position, set the board value to 1; otherwise, set it to 0
+def solve_n_queens(chessboard):
+    if not solve_n_queens_util(chessboard, 0):
+        print("No solution exists.")
+        return False
+
+    print_chessboard(chessboard)
+    return True
+
+
+# Check if a queen can be placed in the specified position
+def is_safe(chessboard, row, col):
+    n = len(chessboard)
+    clock = pygame.time.Clock()
+
+    # Check the row on the left side
+    for i in range(col):
+        if chessboard[row][i] == 1:
+            for j in range(col):
+                if chessboard[row][j] == 2:
+                    chessboard[row][j] = 0
+            return False
+        chessboard[row][i] = 2
+        draw_chessboard(chessboard, n)
+        clock.tick(2)
+
+    # Check for queens in the upper diagonal on the left side
+    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
+        if chessboard[i][j] == 1:
+            for x, y in zip(range(row, -1, -1), range(col, -1, -1)):
+                if chessboard[x][y] == 2:
+                    chessboard[x][y] = 0
+            return False
+        chessboard[i][j] = 2
+        draw_chessboard(chessboard, n)
+        clock.tick(2)
+
+    # Check for queens in the lower diagonal on the left side
+    for i, j in zip(range(row, n, 1), range(col, -1, -1)):
+        if chessboard[i][j] == 1:
+            for x, y in zip(range(row, -1, -1), range(col, -1, -1)):
+                if chessboard[x][y] == 2:
+                    chessboard[x][y] = 0
+            return False
+        chessboard[i][j] = 2
+        draw_chessboard(chessboard, n)
+        clock.tick(2)
+
+    return True
+
+
+def solve_n_queens_util(chessboard, col):
+    n = len(chessboard)
+    clock = pygame.time.Clock()
+
+    # If all queens are placed
+    if col >= n:
+        return True
+
+    # For the given column, try placing queens in each row
+    for i in range(n):
+        if is_safe(chessboard, i, col):
+            # Place the queen on chessboard[i][col] if it is safe to place it
+            chessboard[i][col] = 1
+
+            draw_chessboard(chessboard, n)
+            clock.tick(2)
+
+            # Recursively place the rest of the queens
+            if solve_n_queens_util(chessboard, col + 1):
+                return True
+
+            # If placing the queen at chessboard[i][col] does not provide a solution, remove it
+            chessboard[i][col] = 0
+
+            draw_chessboard(chessboard, n)
+            clock.tick(2)
+
+    # If the queen cannot be placed in any row in this column
+    return False
+
+
+def draw_chessboard(chessboard, n):
+    win = pygame.display.set_mode((800, 800))
+    size = 800 // n
+    queen_image = pygame.transform.scale(pygame.image.load('queen.jpg'), (size, size))
+
+    # Fill the window with white
+    win.fill((255, 255, 255))
+
+    for i in range(n):
+        for j in range(n):
+            if chessboard[j][i] == 0:
+                pygame.draw.rect(win, (255, 255, 255), [i * size, j * size, size, size])
+                pygame.display.update()
+
+            elif chessboard[j][i] == 1:
+                pygame.draw.rect(win, (0, 0, 0), [i * size, j * size, size, size])
+                win.blit(queen_image, (i * size, j * size))
+                pygame.display.update()
+
+            elif chessboard[j][i] == 2:
+                pygame.draw.rect(win, (255, 0, 0), [i * size, j * size, size, size])
+                pygame.display.update()
+
+
+# Print the solution and draw it on the chessboard
+def print_chessboard(chessboard):
+    n = len(chessboard)
+    for i in range(n):
+        for j in range(n):
+            if chessboard[i][j] == 2:
+                chessboard[i][j] = 0
+            print(chessboard[i][j], end="  ")
+        print()
+
+    draw_chessboard(chessboard, n)
+
+
+# Main function
+def main():
+    pygame.init()
+    queens_count = request_user_input()
+    chessboard = generate_chessboard(queens_count)
+    solve_n_queens(chessboard)
+    run = True
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    solve_n_queens(chessboard)
+
+
+main()
